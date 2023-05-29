@@ -6,6 +6,8 @@
 	element_prompt_message_end: .asciiz ": "
 	first_vector_message: .asciiz "Now, enter the first vector: \n"
 	second_vector_message: .asciiz "Let's enter the second vector: \n"
+	first_transformed_vectors_message: .asciiz "First order and value vectors: \n"
+	second_transformed_vectors_message: .asciiz "Second order and value vectors: \n"
 	
 .text
 main:
@@ -54,17 +56,56 @@ main:
 	# $s4, $s6 -- value vectors
 	move $a0, $s0
 	jal allocate_array
-	move $v0, $s3 # $s3
+	move $s3, $v0 # $s3
 	move $a0, $s0
 	jal allocate_array
-	move $v0, $s4 # $s4
+	move $s4, $v0 # $s4
 	move $a0, $s0
 	jal allocate_array
-	move $v0, $s5 # $s5
+	move $s5, $v0 # $s5
 	move $a0, $s0
 	jal allocate_array
-	move $v0, $s6 # $s6
+	move $s6, $v0 # $s6
 	
+	# transforming ($s3, $s4), ($s5, $s6)
+	move $a0, $s0
+	move $a1, $s1
+	move $a2, $s3
+	move $a3, $s4
+	jal transform_vector
+	
+	move $a0, $s0 # we can remove it, but ok
+	move $a1, $s2
+	move $a2, $s5
+	move $a3, $s6
+	jal transform_vector
+	
+	# let's print our transformed vectors for the first
+	li $v0, 4
+	la $a0, first_transformed_vectors_message
+	syscall
+	move $a0, $s3
+	move $a1, $s0
+	jal print_array
+	jal new_line
+	move $a0, $s4
+	move $a1, $s0
+	jal print_array
+	jal new_line
+
+	# let's print our transformed vectors for the second
+	li $v0, 4
+	la $a0, second_transformed_vectors_message
+	syscall
+	
+	move $a0, $s5
+	move $a1, $s0
+	jal print_array
+	jal new_line
+	move $a0, $s6
+	move $a1, $s0
+	jal print_array
+	jal new_line
 	
 	# jumping to the program endpoint
 	j exit
@@ -77,6 +118,46 @@ invalid_vector_size:
 	syscall
 	# jumping to the exit
 	j exit
+
+# subroutine for transforming original vector
+# into order vector and value vector
+# $a0: vector size
+# $a1: original vector address
+# $a2: order vector address
+# $a3: value vector address
+transform_vector:
+	# loop counter
+	li $t0, 0
+	# insert index for value vector
+	li $t1, 0
+	transform_loop:
+		bge $t0, $a0, transform_loop_end
+		# $t2: general vector offset
+		sll $t2, $t0, 2
+		# $t3: current original vector address
+		add $t3, $a1, $t2
+		
+		# $t4: original vector value at current index
+		lw $t4, ($t3)
+		beqz $t4, transform_loop_tail
+		
+		# setting current at order vector to 1
+		add $t3, $a2, $t2
+		li $t5, 1
+		sw $t5, ($t3)
+		
+		# setting current at value vector to $t4
+		add $t3, $a3, $t1
+		sw $t4, ($t3)
+		add $t1, $t1, 4 
+		
+		transform_loop_tail:
+		addiu $t0, $t0, 1
+		j transform_loop
+	transform_loop_end:
+	
+	# return back
+	jr $ra
 
 # subroutine for reading a vector
 # $a0: vector size
