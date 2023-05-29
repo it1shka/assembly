@@ -8,6 +8,7 @@
 	second_vector_message: .asciiz "Let's enter the second vector: \n"
 	first_transformed_vectors_message: .asciiz "First order and value vectors: \n"
 	second_transformed_vectors_message: .asciiz "Second order and value vectors: \n"
+	answer_message: .asciiz "The dot product is: "
 	
 .text
 main:
@@ -106,6 +107,71 @@ main:
 	move $a1, $s0
 	jal print_array
 	jal new_line
+	
+	# now it's time to calculate the dot product
+	# index at order array
+	li $t0, 0
+	# index at value array one
+	li $t1, 0
+	# index at value array two
+	li $t2, 0
+	# dot product
+	li $s7, 0
+	dot_product_loop:
+		bge $t0, $s0, dot_product_loop_end
+
+		# getting value from the order array 1
+		move $t3, $t0
+		sll $t3, $t3, 2
+		add $t3, $t3, $s3
+		lw $t3, ($t3)
+		
+		# getting value from the order array 2
+		move $t4, $t0
+		sll $t4, $t4, 2
+		add $t4, $t4, $s5
+		lw $t4, ($t4)
+		
+		# if both values are 1, increase dot product
+		and $t5, $t3, $t4
+		beqz $t5, skip1
+		
+		move $t5, $t1
+		sll $t5, $t5, 2
+		add $t5, $t5, $s4
+		lw $t5, ($t5)
+		
+		move $t6, $t2
+		sll $t6, $t6, 2
+		add $t6, $t6, $s6
+		lw $t6, ($t6)
+		
+		mul $t5, $t5, $t6
+		add $s7, $s7, $t5 
+		skip1:
+		
+		beqz $t3, skip2
+		add $t1, $t1, 1
+		skip2:
+		
+		beqz  $t4, skip3
+		add $t2, $t2, 1
+		skip3:
+		
+		addiu $t0, $t0, 1
+		j dot_product_loop
+	dot_product_loop_end:
+	
+	# printing the result
+	jal new_line
+	
+	li $v0, 4
+	la $a0, answer_message
+	syscall
+	
+	li $v0, 1
+	move $a0, $s7
+	syscall
 	
 	# jumping to the program endpoint
 	j exit
