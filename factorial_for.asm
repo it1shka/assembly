@@ -27,7 +27,7 @@ main:
 	li $t1, 1
 	loop:
 		# if loop counter bigger than limit, exit
-		bge $t0, $s0, loop_end
+		bgt $t0, $s0, loop_end
 		
 		# multiplying our factorial variable
 		mul $t1, $t1, $t0
