@@ -96,25 +96,11 @@ bubble_sort:
     inner_loop:
       bge $t2, $t3, inner_loop_end
 
-      # loading array elements
-      # $t4 -- array + i, $t5 -- array + i + 1
-      # $t6 -- array[i], $t7 -- array[i + 1]
-      lw $t4, 4($sp)
-      sll $t6, $t2, 2
-      add $t4, $t4, $t6
-      lw $t6, ($t4)
-      
-      lw $t5, 4($sp)
-      sll $t7, $t2, 2
-      add $t5, $t5, $t7
-      addi $t5, $t5, 4
-      lw $t7, ($t5)
-
-      ble $t6, $t7, else_branch
-        # swapping array elements
-        sw $t7, ($t4)
-        sw $t6, ($t5)
-      else_branch:
+      # performing maybe swap
+      lw $a0, 4($sp)
+      move $a1, $t2
+      add $a2, $t2, 1
+      jal maybe_swap
 
       addi $t2, $t2, 1
       j inner_loop
@@ -128,6 +114,46 @@ bubble_sort:
   lw $ra, 8($sp)
   addi $sp, $sp, 12
   jr $ra
+ 
+# procedure that swaps two elements
+# if first > second
+# accepts array address in $a0
+# accepts i in $a1
+# accepts j in $a2
+maybe_swap:
+	# popping values on our stack
+	addi $sp, $sp, -16
+	sw $ra, 12($sp)
+	sw $a0, 8($sp)
+	sw $a1, 4($sp)
+	sw $a2, 0($sp)
+	
+	# performing maybe swap
+	lw $t4, 8($sp)
+	
+	# $t5 -- array + i
+	# $t6 -- array[i]
+	lw $t5, 4($sp)
+	sll $t5, $t5, 2
+	add $t5, $t5, $t4
+	lw $t6, ($t5)
+	
+	# $t7 -- array + j
+	# $t8 -- array[j]
+	lw $t7, 0($sp)
+	sll $t7, $t7, 2
+	add $t7, $t7, $t4
+	lw $t8, ($t7)
+	
+	bge $t8, $t6, else_branch
+		sw $t6, ($t7)
+		sw $t8, ($t5)
+	else_branch:
+	
+	# restoring a stack and returning
+	lw $ra, 12($sp)
+	addi $sp, $sp, 16
+	jr $ra
 
 # procedure for printing an array
 # accepts array address in $a0
